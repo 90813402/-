@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>理事長盃國術錦標賽 線上測驗</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --accent: #22d3ee;
+      --accent-2: #60a5fa;
+      --correct: #16a34a;
+      --wrong: #dc2626;
+      --border: #1f2937;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+        "Helvetica Neue", Arial, "Noto Sans TC", "Microsoft JhengHei", "Apple LiGothic Medium", sans-serif;
+      background: radial-gradient(1200px 800px at 80% -10%, rgba(34,211,238,0.12), transparent 60%),
+                  radial-gradient(1000px 1000px at -10% 120%, rgba(96,165,250,0.12), transparent 60%),
+                  var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+    .app {
+      width: 100%;
+      max-width: 760px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0)) , var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(255,255,255,0.02);
+      overflow: hidden;
+    }
+    header {
+      padding: 22px 22px 10px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    }
+    .title { font-weight: 800; letter-spacing: .5px; }
+    .muted { color: var(--muted); font-size: 14px; }
+    .progress-wrap {
+      display: flex; align-items: center; gap: 10px;
+      width: 100%;
+      padding: 16px 22px 0;
+    }
+    .progress {
+      flex: 1;
+      height: 10px;
+      background: #0b1220;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+    .progress > span {
+      display: block;
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      transition: width .35s ease;
+    }
+    main {
+      padding: 22px;
+      display: grid;
+      gap: 16px;
+    }
+    .card {
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+      background: rgba(255,255,255,0.02);
+    }
+    h2.question {
+      margin: 0 0 8px;
+      line-height: 1.4;
+      font-size: 22px;
+      font-weight: 700;
+    }
+    ol.options {
+      list-style: none;
+      padding: 0; margin: 0;
+      display: grid; gap: 10px;
+    }
+    button.opt {
+      text-align: left;
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #0b1220;
+      color: var(--text);
+      cursor: pointer;
+      transition: transform .08s ease, border-color .2s ease, background .2s ease;
+      position: relative;
+    }
+    button.opt:hover { transform: translateY(-1px); border-color: rgba(255,255,255,0.12); }
+    button.opt[disabled] { cursor: not-allowed; opacity: .9; transform: none; }
+    button.opt.correct { border-color: rgba(34,197,94,.6); background: rgba(22,163,74,.15); }
+    button.opt.wrong { border-color: rgba(239,68,68,.6); background: rgba(220,38,38,.12); }
+    .controls {
+      display: flex; gap: 10px; justify-content: space-between; align-items: center; margin-top: 4px;
+    }
+    .pill {
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: #0b1220;
+      font-size: 12px;
+    }
+    .btn {
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      color: var(--text);
+      cursor: pointer;
+      font-weight: 700;
+      letter-spacing: .3px;
+    }
+    .btn.primary { border-color: transparent; background: linear-gradient(90deg, var(--accent), var(--accent-2)); color: #0b1220; }
+    .center { text-align: center; }
+    .result {
+      display: grid; gap: 10px; padding: 12px;
+    }
+    .review { display: grid; gap: 10px; }
+    .review .item {
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      background: rgba(255,255,255,0.02);
+    }
+    footer { padding: 0 22px 22px; color: var(--muted); font-size: 12px; }
+    .small { font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <div class="title">理事長盃國術錦標賽｜線上測驗</div>
+        <div class="muted">依《競賽規程》製作的 10 題選擇題</div>
+      </div>
+      <div class="pill" id="score-pill">得分：0</div>
+    </header>
+
+    <div class="progress-wrap">
+      <div class="muted small" id="progress-text">第 1 / 10 題</div>
+      <div class="progress"><span id="progress-bar"></span></div>
+    </div>
+
+    <main>
+      <section class="card" id="quiz-card">
+        <h2 class="question" id="question">載入中…</h2>
+        <ol class="options" id="options"></ol>
+        <div class="controls">
+          <div class="muted small" id="feedback">選擇你的答案</div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn" id="skip-btn" title="略過此題（不計分）">略過</button>
+            <button class="btn primary" id="next-btn" disabled>下一題</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="card result" id="result-card" style="display:none;">
+        <h2 class="question center">測驗完成 🎉</h2>
+        <div class="center" id="final-score"></div>
+        <div class="small center muted" id="time-used"></div>
+        <div class="review" id="review"></div>
+        <div class="center" style="margin-top:8px;">
+          <button class="btn" id="retry-btn">再測一次</button>
+          <button class="btn" id="download-btn">下載作答記錄</button>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      小提醒：本測驗僅供練習，題目來源為《114年彰化縣體育會理事長盃國術錦標賽競賽規程》。
+    </footer>
+  </div>
+
+  <script>
+    // 題庫（10 題）
+    const QUESTIONS = [
+      {
+        q: "114年彰化縣理事長盃國術錦標賽比賽日期為？",
+        options: ["7月18日", "7月19日", "7月20日", "7月21日"],
+        answer: "7月20日"
+      },
+      {
+        q: "比賽地點在哪裡舉行？",
+        options: ["彰化縣立體育館", "彰化市南興國小活動中心", "彰化縣議會廣場", "彰安國中體育館"],
+        answer: "彰化市南興國小活動中心"
+      },
+      {
+        q: "單練報名費用為？",
+        options: ["每人每項200元", "每人每項300元", "每人每項500元", "免費"],
+        answer: "每人每項300元"
+      },
+      {
+        q: "團練報名時，每隊拳術組人數限制為？",
+        options: ["2-4人", "3-5人", "4-7人", "5-8人"],
+        answer: "4-7人"
+      },
+      {
+        q: "學生組 A5 組是屬於哪個年齡層？",
+        options: ["幼兒園", "國小中年級", "國中組", "高中組"],
+        answer: "國中組"
+      },
+      {
+        q: "社會組 B2 的年齡範圍為？",
+        options: ["19-25歲", "26-30歲", "31-35歲", "36-40歲"],
+        answer: "26-30歲"
+      },
+      {
+        q: "比賽規則採用哪一單位審定的規則？",
+        options: ["教育部體育署", "中華奧會", "中華民國體育運動總會", "彰化縣體育會"],
+        answer: "中華民國體育運動總會"
+      },
+      {
+        q: "套路比賽時間限制為？",
+        options: ["不得超過4分鐘", "不得超過5分鐘", "不得超過6分鐘", "不得超過8分鐘"],
+        answer: "不得超過6分鐘"
+      },
+      {
+        q: "清寒學生若提出學校證明，可以享有什麼優惠？",
+        options: ["報名費半價", "免收報名費", "可報名不限項目", "提供免費午餐"],
+        answer: "免收報名費"
+      },
+      {
+        q: "本次比賽的承辦單位是？",
+        options: ["彰化縣體育會國術委員會", "彰化縣政府", "彰化縣議會", "彰化市南興國小"],
+        answer: "彰化縣體育會國術委員會"
+      }
+    ];
+
+    // 洗牌（Fisher–Yates）
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    const state = {
+      order: shuffle([...Array(QUESTIONS.length).keys()]),
+      idx: 0,
+      score: 0,
+      history: [],
+      start: Date.now()
+    };
+
+    const els = {
+      q: document.getElementById("question"),
+      opts: document.getElementById("options"),
+      feedback: document.getElementById("feedback"),
+      next: document.getElementById("next-btn"),
+      skip: document.getElementById("skip-btn"),
+      scorePill: document.getElementById("score-pill"),
+      progressText: document.getElementById("progress-text"),
+      bar: document.getElementById("progress-bar"),
+      quizCard: document.getElementById("quiz-card"),
+      resultCard: document.getElementById("result-card"),
+      finalScore: document.getElementById("final-score"),
+      timeUsed: document.getElementById("time-used"),
+      review: document.getElementById("review"),
+      retry: document.getElementById("retry-btn"),
+      download: document.getElementById("download-btn"),
+    };
+
+    function renderQuestion() {
+      const i = state.order[state.idx];
+      const item = QUESTIONS[i];
+      els.q.textContent = item.q;
+      els.opts.innerHTML = "";
+      els.feedback.textContent = "選擇你的答案";
+      els.next.disabled = true;
+
+      item.options.forEach((optText, k) => {
+        const btn = document.createElement("button");
+        btn.className = "opt";
+        btn.textContent = String.fromCharCode(65 + k) + ". " + optText;
+        btn.onclick = () => handleAnswer(optText, btn);
+        els.opts.appendChild(btn);
+      });
+
+      const progress = ((state.idx) / QUESTIONS.length) * 100;
+      els.bar.style.width = progress + "%";
+      els.progressText.textContent = `第 ${state.idx + 1} / ${QUESTIONS.length} 題`;
+    }
+
+    function lockOptions() {
+      document.querySelectorAll("button.opt").forEach(b => b.disabled = true);
+    }
+
+    function handleAnswer(choiceText, btn) {
+      const i = state.order[state.idx];
+      const item = QUESTIONS[i];
+      const correct = choiceText === item.answer;
+
+      lockOptions();
+      btn.classList.add(correct ? "correct" : "wrong");
+      document.querySelectorAll("button.opt").forEach(b => {
+        if (b.textContent.endsWith(item.answer)) b.classList.add("correct");
+      });
+
+      els.next.disabled = false;
+      els.feedback.textContent = correct ? "✅ 答對了！" : `❌ 答錯了，正確答案是：${item.answer}`;
+      if (correct) state.score += 1;
+
+      state.history.push({
+        index: i,
+        question: item.q,
+        selected: choiceText,
+        correct: item.answer,
+        isCorrect: correct
+      });
+
+      els.scorePill.textContent = `得分：${state.score}`;
+    }
+
+    function nextQuestion(skipped = false) {
+      if (skipped) {
+        const i = state.order[state.idx];
+        const item = QUESTIONS[i];
+        state.history.push({
+          index: i,
+          question: item.q,
+          selected: null,
+          correct: item.answer,
+          isCorrect: false,
+          skipped: true
+        });
+      }
+
+      state.idx += 1;
+      if (state.idx >= QUESTIONS.length) {
+        finish();
+      } else {
+        renderQuestion();
+      }
+    }
+
+    function finish() {
+      els.quizCard.style.display = "none";
+      els.resultCard.style.display = "grid";
+      const pct = Math.round((state.score / QUESTIONS.length) * 100);
+      els.finalScore.innerHTML = `<div class="pill">你的成績：${state.score} / ${QUESTIONS.length}（${pct}%）</div>`;
+      const secs = Math.round((Date.now() - state.start) / 1000);
+      els.timeUsed.textContent = `作答時間：${secs} 秒`;
+
+      // 進度條滿格
+      els.bar.style.width = "100%";
+      els.progressText.textContent = `完成`;
+
+      // 審題回顧
+      els.review.innerHTML = "";
+      state.history.forEach((h, idx) => {
+        const div = document.createElement("div");
+        div.className = "item";
+        const status = h.skipped ? "（略過）" : (h.isCorrect ? "✅" : "❌");
+        div.innerHTML = `<div><strong>第 ${idx + 1} 題</strong> ${status}</div>
+                         <div class="small muted" style="margin:6px 0;">${h.question}</div>
+                         <div class="small">你的答案：${h.selected ?? "—"}</div>
+                         <div class="small">正確答案：${h.correct}</div>`;
+        els.review.appendChild(div);
+      });
+    }
+
+    // 綁定事件
+    els.next.addEventListener("click", () => nextQuestion(false));
+    els.skip.addEventListener("click", () => {
+      lockOptions();
+      els.next.disabled = false;
+      els.feedback.textContent = "已略過此題，按『下一題』繼續。";
+      nextQuestion(true);
+    });
+    els.retry.addEventListener("click", () => {
+      Object.assign(state, {
+        order: shuffle([...Array(QUESTIONS.length).keys()]),
+        idx: 0, score: 0, history: [], start: Date.now()
+      });
+      els.scorePill.textContent = "得分：0";
+      els.resultCard.style.display = "none";
+      els.quizCard.style.display = "block";
+      renderQuestion();
+    });
+    els.download.addEventListener("click", () => {
+      const data = {
+        finishedAt: new Date().toISOString(),
+        score: state.score,
+        total: QUESTIONS.length,
+        history: state.history
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "quiz_result.json";
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    // 啟動
+    renderQuestion();
+  </script>
+</body>
+</html>
